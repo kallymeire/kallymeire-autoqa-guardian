@@ -30,7 +30,7 @@ jobs:
 
       - name: Analisar PR com IA e gerar testes
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           python scripts/analyze_pr.py --diff pr.diff --out tests/test_generated.py --summary risk_summary.md
 
