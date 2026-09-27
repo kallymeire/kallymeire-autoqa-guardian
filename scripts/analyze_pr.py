@@ -1,6 +1,6 @@
 """
 Envia o diff de um Pull Request + contexto de testes existentes (RAG)
-para a API da Claude, e grava:
+para a API gratuita do Google Gemini, e grava:
   - um arquivo de teste gerado (quality gate roda o pytest sobre ele)
   - um resumo de riscos em Markdown (comentado automaticamente no PR)
 """
@@ -8,7 +8,7 @@ import argparse
 import os
 from pathlib import Path
 
-import anthropic
+import google.generativeai as genai
 
 from rag_context import buscar_contexto_similar
 
@@ -28,22 +28,17 @@ gerados cobrem>
 
 
 def analisar(diff_texto: str, contexto_rag: str) -> tuple[str, str]:
-    cliente = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
-
-    mensagem = cliente.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=4000,
-        system=PROMPT_SISTEMA,
-        messages=[{
-            "role": "user",
-            "content": (
-                f"## Contexto de testes existentes no repositório\n{contexto_rag}\n\n"
-                f"## Diff do Pull Request\n```diff\n{diff_texto}\n```"
-            ),
-        }],
+    genai.configure(api_key=os.environ["GEMINI_API_KEY"])
+    modelo = genai.GenerativeModel(
+        model_name="gemini-2.0-flash",
+        system_instruction=PROMPT_SISTEMA,
     )
 
-    texto = "".join(bloco.text for bloco in mensagem.content if bloco.type == "text")
+    resposta = modelo.generate_content(
+        f"## Contexto de testes existentes no repositório\n{contexto_rag}\n\n"
+        f"## Diff do Pull Request\n```diff\n{diff_texto}\n```"
+    )
+    texto = resposta.text
 
     testes = texto.split("===TESTES===")[1].split("===RESUMO===")[0].strip() if "===TESTES===" in texto else ""
     resumo = texto.split("===RESUMO===")[1].strip() if "===RESUMO===" in texto else texto
