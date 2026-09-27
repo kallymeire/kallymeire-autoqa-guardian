@@ -1,0 +1,6 @@
+.env
+__pycache__/
+*.pyc
+pr.diff
+risk_summary.md
+.pytest_cache/
